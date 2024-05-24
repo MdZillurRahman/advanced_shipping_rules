@@ -23,6 +23,7 @@ model Session {
 
 model ZoneShippingRate {
   id           Int    @id @default(autoincrement())
+  rateProviderId String?
   zoneId       String?
   rateTitle    String?
   rateSubtitle String?

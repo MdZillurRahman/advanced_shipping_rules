@@ -17,8 +17,9 @@ import {
     TextContainer,
     TextField,
     ButtonGroup,
+    Icon,
 } from "@shopify/polaris";
-import {PlusIcon} from '@shopify/polaris-icons';
+import {PlusIcon, EditIcon, DeleteIcon} from '@shopify/polaris-icons';
 import { authenticate } from "../shopify.server";
 import { useCallback, useState } from "react";
 
@@ -44,27 +45,57 @@ export const loader = async ({ request }) => {
         await carrier_service.save({
             update: true,
         });
-    };    
+  };
+
+  let rateProviderId = carrierList.data.filter(list => list.name == "Shipping Rate Provider")[0].id;
+      
+  const shippingRateData = await fetch(process.env.APP_URL + `/api/shippingRate?shop=${process.env.SHOP_NAME}&rateProviderId=${rateProviderId}`)
+                                  .then(response => response.json())
+                                  .then(result => {
+                                    console.log(result);
+                                    return result.data;
+                                  })
+                                  .catch(error => console.log('error', error));
   
-    return json({ data: shippingZone, carrierList: carrierList});
+    return json({ data: shippingZone, carrierList: carrierList, shippingRateData: shippingRateData});
 };
 
 export const action = async ({ request }) => { 
     // Get the form data from the request
   let settings = await request.formData();
   settings = Object.fromEntries(settings);
+  const { admin, session } = await authenticate.admin(request);
 
-  let appUrl = "https://clusters-grave-management-rotation.trycloudflare.com";
+  const carrierList = await admin.rest.resources.CarrierService.all({
+      session: session,
+  });
+
+  let rateProviderId = carrierList.data.filter(list => list.name == "Shipping Rate Provider")[0].id;
 
   // Use the `get` method to get the value of the form field
   var formdata = new FormData();
-  formdata.append("zoneID", settings?.zone);
-  formdata.append("rateTitle", settings?.title);
-  formdata.append("rateSubtitle", settings?.subTitle);
-  formdata.append("shop", "entry-try-shop.myshopify.com");
-  formdata.append("_action", "CREATE");
+  const _action = settings?._action;
 
-  console.log(formdata);
+  switch (_action) {
+    case "CREATE":
+      formdata.append("zoneID", settings?.zoneId);
+      formdata.append("rateProviderId", rateProviderId);
+      formdata.append("rateTitle", settings?.title);
+      formdata.append("rateSubtitle", settings?.subTitle);
+      formdata.append("shop", process.env.SHOP_NAME);
+      formdata.append("_action", settings?._action);
+
+      break;
+    case "DELETE":
+      formdata.append("deletedId", settings?.rateProviderId);
+      formdata.append("shop", process.env.SHOP_NAME);
+      formdata.append("_action", settings?._action);
+      
+      break;
+    default:
+      // Optional: handle other methods or return a method not allowed response
+      return new Response("Method Not Allowed", { status: 405 });
+  }
   
   var requestOptions = {
     method: 'POST',
@@ -73,7 +104,7 @@ export const action = async ({ request }) => {
   };
 
   // You can use newUser to create a new user in your database
-  fetch(appUrl + "/api/shippingRate", requestOptions)
+  fetch(process.env.APP_URL + "/api/shippingRate", requestOptions)
         .then(response => response.json())
         .then(result => {
             console.log(result);
@@ -189,7 +220,7 @@ export const action = async ({ request }) => {
 
 
 export default function AdditionalPage() {
-  const { data, carrierList } = useLoaderData();
+  const { data, carrierList, shippingRateData } = useLoaderData();
   const submit = useSubmit();
   const [showModal, setShowModal] = useState(false);
   const [fromState, setFromState] = useState({});
@@ -204,25 +235,41 @@ export default function AdditionalPage() {
     handleChange();
     setSelectedZoneID(zoneID);
   }
-  console.log(carrierList);
-      
+        
   return (
     <Page>
       <ui-title-bar title="Advanced Shipping Rate" />
       <BlockStack gap="400">
-      {data && data.data.map((zone, index) => (
-          <Card roundedAbove="sm" key={index} space-400>
+        {data && data.data.map((zone, index) => (
+          <div key={index}>
             <BlockStack gap="200">
-              <Text as="h1" variant="headingSm">
+              <Text as="h1" variant="headingXl" padding="400">
                 {zone.name}
               </Text>
             </BlockStack>
-            <Bleed marginBlockEnd="400" marginInline="400">
-              <Box background="bg-surface-secondary" padding="400">
-                <Button onClick={() => setZoneID(zone.id)} icon={PlusIcon}>Add Rate</Button>
-              </Box>
-            </Bleed>
-          </Card>
+            <Card roundedAbove="sm">
+              {shippingRateData && shippingRateData.map((rate, index) =>
+                zone.id == rate.zoneId && 
+                  <Box gap="200" key={index}>
+                    <Text as="h1" variant="headingLg">
+                      {rate.rateTitle}
+                    </Text>
+                    {/* <Button icon={EditIcon}>Edit Rate</Button> */}
+                    <Link url={`/app/advanced-shipping/${rate.id}`} icon={EditIcon}>Edit Rate</Link>
+                    <Form method="POST">
+                      <input type="text" name="_action" defaultValue="DELETE" hidden/>
+                      <input type="number" name="rateProviderId" defaultValue={rate.id} hidden/>
+                      <Button submit={true} icon={DeleteIcon}>Delete Rate</Button>
+                    </Form>
+                  </Box>
+              )}
+              <Bleed marginBlockEnd="400" marginInline="400">
+                <Box background="bg-surface-secondary" padding="400">
+                  <Button onClick={() => setZoneID(zone.id)} icon={PlusIcon}>Add Rate</Button>
+                </Box>
+              </Bleed>
+            </Card>
+          </div>
         ))}
       </BlockStack>
       <Frame>
@@ -234,6 +281,8 @@ export default function AdditionalPage() {
           <Modal.Section>
             <Form method="POST">
               <BlockStack gap="400">
+                <input type="text" name="zoneId" defaultValue={selectedZoneID} hidden/>
+                <input type="text" name="_action" defaultValue="CREATE" hidden/>
                 <input type="text" name="zone" defaultValue={selectedZoneID} hidden/>
                 <TextField label="Title" name="title" value={fromState?.title} onChange={(value) => setFromState({ ...fromState, title: value})} />
                 <TextField label="Sub Title" name="subTitle" value={fromState?.subTitle} onChange={(value) => setFromState({ ...fromState, subTitle: value })} />

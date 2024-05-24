@@ -7,15 +7,8 @@ import { authenticate } from "../shopify.server";
 
 export const loader = async ({ request }) => {
   await authenticate.admin(request);
-  const { admin, session } = await authenticate.admin(request);
 
-  await admin.rest.resources.ShippingZone.all({
-    session: session,
-  });
-
-  return json({ apiKey: process.env.SHOPIFY_API_KEY || "", data: await admin.rest.resources.ShippingZone.all({
-    session: session,
-  })});
+  return json({ apiKey: process.env.SHOPIFY_API_KEY || "" });
 };
 
 export default function App() {

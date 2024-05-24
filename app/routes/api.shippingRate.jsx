@@ -6,34 +6,29 @@ import { cors } from "remix-utils";
 // read database and return wishlist items for that customer.
 export async function loader({ request }) {
   const url = new URL(request.url);
-  // const customerId = url.searchParams.get("customerId");
-  // const shop = url.searchParams.get("shop");
-  // const productId = url.searchParams.get("productId");
-  
-  let wishlist = []
+  const shop = url.searchParams.get("shop");
+  const rateProviderId = url.searchParams.get("rateProviderId");
 
+  if( !shop || !rateProviderId) {
+    return json({
+      message: "Missing data. Required data: shop",
+      method: "GET"
+    });
+  }
 
-  // if(!customerId || !shop || !productId) {
-  //   return json({
-  //     message: "Missing data. Required data: customerId, productId, shop",
-  //     method: "GET"
-  //   });
-  // }
-
-  // If customerId, shop, productId is provided, return wishlist items for that customer.
-  // const wishlist = await db.wishlist.findMany({
-  //   where: {
-  //     customerId: customerId,
-  //     shop: shop,
-  //     productId: productId,
-  //   },
-  // });
+  // If shop is provided, return wishlist items for that Provider.
+  const shippingRate = await db.ZoneShippingRate.findMany({
+    where: {
+      shop: shop,
+      rateProviderId: rateProviderId
+    },
+  });
 
 
   const response = json({
     ok: true,
     message: "Success",
-    data: wishlist,
+    data: shippingRate,
   });
 
   return cors(request, response);
@@ -46,19 +41,13 @@ export async function loader({ request }) {
 export async function action({ request }) {
   let data = await request.formData();
   data = Object.fromEntries(data);
-  console.log(data);
+  const rateProviderId = data.rateProviderId;
   const zoneId = data.zoneID;
   const rateTitle = data.rateTitle;
   const rateSubtitle = data.rateSubtitle;
   const shop = data.shop;
   const _action = data._action;
-
-  if(!zoneId || !rateTitle || !shop || !_action) {
-    return json({
-      message: "Missing data. Required data: zoneId, rateTitle, shop, _action",
-      method: _action
-    });
-  }
+  const deletedId = data.deletedId;
 
   let response;
 
@@ -66,8 +55,16 @@ export async function action({ request }) {
     case "CREATE":
       // Handle POST request logic here
       // For example, adding a new item to the wishlist
+      if(!rateProviderId || !zoneId || !rateTitle || !shop || !_action) {
+        return json({
+          message: "Missing data. Required data: rateProviderId, zoneId, rateTitle, shop, _action",
+          method: _action
+        });
+      }
+
       await db.ZoneShippingRate.create({
         data: {
+          rateProviderId,
           zoneId,
           rateTitle,
           rateSubtitle,
@@ -86,11 +83,10 @@ export async function action({ request }) {
     case "DELETE":
       // Handle DELETE request logic here (Not tested)
       // For example, removing an item from the wishlist
-      await db.wishlist.deleteMany({
+      await db.ZoneShippingRate.deleteMany({
         where: {
-          zoneId: zoneId,
+          id: Number(deletedId),
           shop: shop,
-          rateTitle: rateTitle,
         },
       });
 

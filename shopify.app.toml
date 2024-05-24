@@ -3,7 +3,7 @@
 client_id = "848be31aea287fd3b09d52647da03aa6"
 name = "advanced-shipping-discount"
 handle = "advanced-shipping-discount"
-application_url = "https://clusters-grave-management-rotation.trycloudflare.com"
+application_url = "https://formal-estate-cliff-ballot.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,9 +17,9 @@ scopes = "read_shipping,write_discounts,write_discounts_allocator_functions,writ
 
 [auth]
 redirect_urls = [
-  "https://clusters-grave-management-rotation.trycloudflare.com/auth/callback",
-  "https://clusters-grave-management-rotation.trycloudflare.com/auth/shopify/callback",
-  "https://clusters-grave-management-rotation.trycloudflare.com/api/auth/callback"
+  "https://formal-estate-cliff-ballot.trycloudflare.com/auth/callback",
+  "https://formal-estate-cliff-ballot.trycloudflare.com/auth/shopify/callback",
+  "https://formal-estate-cliff-ballot.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
