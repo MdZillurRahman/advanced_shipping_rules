@@ -22,6 +22,7 @@ export default function App() {
         </Link>
         <Link to="/app/additional">Additional page</Link>
         <Link to="/app/advanced-shipping">Advanced Shipping</Link>
+        <Link to="/app/sync">App Sync</Link>
       </ui-nav-menu>
       <Outlet />
     </AppProvider>

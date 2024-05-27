@@ -3,7 +3,7 @@
 client_id = "848be31aea287fd3b09d52647da03aa6"
 name = "advanced-shipping-discount"
 handle = "advanced-shipping-discount"
-application_url = "https://formal-estate-cliff-ballot.trycloudflare.com"
+application_url = "https://specifics-termination-degrees-regulated.trycloudflare.com"
 embedded = true
 
 [build]
@@ -13,13 +13,13 @@ include_config_on_deploy = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_shipping,write_discounts,write_discounts_allocator_functions,write_products,write_shipping"
+scopes = "read_delivery_customizations,read_locations,read_orders,read_products,read_shipping,write_locations,write_orders,write_products,write_shipping"
 
 [auth]
 redirect_urls = [
-  "https://formal-estate-cliff-ballot.trycloudflare.com/auth/callback",
-  "https://formal-estate-cliff-ballot.trycloudflare.com/auth/shopify/callback",
-  "https://formal-estate-cliff-ballot.trycloudflare.com/api/auth/callback"
+  "https://specifics-termination-degrees-regulated.trycloudflare.com/auth/callback",
+  "https://specifics-termination-degrees-regulated.trycloudflare.com/auth/shopify/callback",
+  "https://specifics-termination-degrees-regulated.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]

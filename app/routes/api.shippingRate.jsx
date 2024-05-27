@@ -45,6 +45,7 @@ export async function action({ request }) {
   const zoneId = data.zoneID;
   const rateTitle = data.rateTitle;
   const rateSubtitle = data.rateSubtitle;
+  const active = data.active == "false" ? false : true;
   const shop = data.shop;
   const _action = data._action;
   const deletedId = data.deletedId;
@@ -68,6 +69,7 @@ export async function action({ request }) {
           zoneId,
           rateTitle,
           rateSubtitle,
+          active,
           shop,
         },
       });

@@ -18,6 +18,7 @@ import {
     TextField,
     ButtonGroup,
     Icon,
+    Badge,
 } from "@shopify/polaris";
 import {PlusIcon, EditIcon, DeleteIcon} from '@shopify/polaris-icons';
 import { authenticate } from "../shopify.server";
@@ -52,12 +53,11 @@ export const loader = async ({ request }) => {
   const shippingRateData = await fetch(process.env.APP_URL + `/api/shippingRate?shop=${process.env.SHOP_NAME}&rateProviderId=${rateProviderId}`)
                                   .then(response => response.json())
                                   .then(result => {
-                                    console.log(result);
                                     return result.data;
                                   })
                                   .catch(error => console.log('error', error));
   
-    return json({ data: shippingZone, carrierList: carrierList, shippingRateData: shippingRateData});
+    return json({ data: shippingZone, shippingRateData: shippingRateData});
 };
 
 export const action = async ({ request }) => { 
@@ -82,6 +82,7 @@ export const action = async ({ request }) => {
       formdata.append("rateProviderId", rateProviderId);
       formdata.append("rateTitle", settings?.title);
       formdata.append("rateSubtitle", settings?.subTitle);
+      formdata.append("active", false);
       formdata.append("shop", process.env.SHOP_NAME);
       formdata.append("_action", settings?._action);
 
@@ -113,115 +114,10 @@ export const action = async ({ request }) => {
 
   // Redirect to the user page
   return json(formdata);
-    // return {data: newUser};
 }
 
-// const addRule = async ({ request }) => {
-//   const { admin } = await authenticate.admin(request);
-
-//   console.log(request);
-
-//   const response = await admin.graphql(
-//       `#graphql
-//       mutation deliveryProfileUpdate($id: ID!, $profile: DeliveryProfileInput!) {
-//         deliveryProfileUpdate(id: $id, profile: $profile) {
-//           profile {
-//             id
-//             name
-//             profileLocationGroups {
-//               locationGroup {
-//                 id
-//                 locations(first: 5) {
-//                   nodes {
-//                     name
-//                     address {
-//                       country
-//                     }
-//                   }
-//                 }
-//               }
-//               locationGroupZones(first: 2) {
-//                 edges {
-//                   node {
-//                     zone {
-//                       id
-//                       name
-//                       countries {
-//                         code {
-//                           countryCode
-//                         }
-//                         provinces {
-//                           code
-//                         }
-//                       }
-//                     }
-//                   }
-//                 }
-//               }
-//             }
-//           }
-//           userErrors {
-//             field
-//             message
-//           }
-//         }
-//       }`,
-//       {
-//         variables: {
-//           "id": "gid://shopify/DeliveryProfile/96293421376",
-//           "profile": {
-//             "name": "Genaral Profile",
-//             "locationGroupsToUpdate": [
-//               {
-//                 "id":"gid://shopify/DeliveryLocationGroup/117527445824",
-//                 "zonesToUpdate": [
-//                   {
-//                     "id": "gid://shopify/DeliveryZone/513788739904",
-//                     "name": "Domestic",
-//                     "countries": {
-//                       "code": "BD"
-//                     },
-//                     "methodDefinitionsToCreate": [
-//                       {
-//                         "active": true,
-//                         "name": "Standard",
-//                         "priceConditionsToCreate": [
-//                           {
-//                             "criteria": {
-//                               "amount": "500",
-//                               "currencyCode": "BDT"
-//                             },
-//                             "operator": "GREATER_THAN_OR_EQUAL_TO"
-//                           }
-//                         ],
-//                         "rateDefinition": {
-//                           "price": {
-//                             "amount": "100",
-//                             "currencyCode": "BDT"
-//                           }
-//                         }
-//                       }
-//                     ]
-//                   }
-//                 ]
-//               }
-//             ]
-//           }
-//         },
-//       },
-//     );
-    
-//     const data = await response.json();
-    
-//     console.log(data);
-
-// }
-
-
-
 export default function AdditionalPage() {
-  const { data, carrierList, shippingRateData } = useLoaderData();
-  const submit = useSubmit();
+  const { data, shippingRateData } = useLoaderData();
   const [showModal, setShowModal] = useState(false);
   const [fromState, setFromState] = useState({});
   const [selectedZoneID, setSelectedZoneID] = useState();
@@ -253,13 +149,14 @@ export default function AdditionalPage() {
                   <Box gap="200" key={index}>
                     <Text as="h1" variant="headingLg">
                       {rate.rateTitle}
+                      <Badge padding="200" tone={rate.active ? "success" : ""}>{rate.active ? "Connected" : "Not Connected"}</Badge>
                     </Text>
                     {/* <Button icon={EditIcon}>Edit Rate</Button> */}
                     <Link url={`/app/advanced-shipping/${rate.id}`} icon={EditIcon}>Edit Rate</Link>
                     <Form method="POST">
                       <input type="text" name="_action" defaultValue="DELETE" hidden/>
                       <input type="number" name="rateProviderId" defaultValue={rate.id} hidden/>
-                      <Button submit={true} icon={DeleteIcon}>Delete Rate</Button>
+                      <Button tone="critical" submit={true} icon={DeleteIcon}>Delete Rate</Button>
                     </Form>
                   </Box>
               )}
@@ -289,7 +186,7 @@ export default function AdditionalPage() {
 
                 <ButtonGroup >
                   <Button onClick={handleChange}>Cancel</Button>
-                  <Button submit={true} variant="primary">Save</Button>
+                  <Button onClick={handleChange} submit={true} variant="primary">Save</Button>
                 </ButtonGroup>
               </BlockStack>
             </Form>

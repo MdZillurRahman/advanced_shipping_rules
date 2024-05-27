@@ -27,6 +27,7 @@ model ZoneShippingRate {
   zoneId       String?
   rateTitle    String?
   rateSubtitle String?
+  active       Boolean?
   shop         String?
   createdAt    DateTime @default(now())
 }
